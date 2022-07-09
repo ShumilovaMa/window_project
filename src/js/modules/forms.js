@@ -1,33 +1,31 @@
-const forms = () => {
+import checkNumInputs from './checkNumInputs';
+
+const forms = (state) => {
     const form = document.querySelectorAll('form'),
-          inputs = document.querySelectorAll('input'),
-          phoneInputs = document.querySelectorAll('input[name="user_phone"]');
+          inputs = document.querySelectorAll('input');
 
-    phoneInputs.forEach(item => {
-        item.addEventListener('input', () => {
-            item.value = item.value.replace(/\D/, '');
-        });
-    });
 
+    checkNumInputs('input[name="user_phone"]');
+    
     const message = {
         loading: "Идет загрузка...",
-        success: "Спасибо! Специалист скоро с вами свяжется",
+        success: "Спасибо! Мы скоро с вами свяжемся.",
         failure: "Ошибка, что-то пошло не так..."
     };
-
+    
     const postData = async (url, data) => {
         document.querySelector('.status').textContent = message.loading;
-        let res = await fetch(url, {
+        let result = await fetch(url, {
             method: "POST",
             body: data
         });
 
-        return await res.text();
-    };    
+        return await result.text();
+    };
 
     const clearInputs = () => {
         inputs.forEach(item => {
-           item.value = '';             
+            item.value = '';
         });
     };
 
@@ -35,15 +33,20 @@ const forms = () => {
         item.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            let statusMessage = document.createElement('div');//блок, в который будем помещать сообщение из объекта
-            statusMessage.classList.add('status');//добавляем стиль блоку
-            item.appendChild(statusMessage);//помещаем блок на страницу
+            let statusMessage = document.createElement('div');
+            statusMessage.classList.add('status');
+            item.appendChild(statusMessage);
 
-            const formData = new FormData(item);//собираем все данный, находящиеся в каждой форме
-
+            const formData = new FormData(item);
+            if (item.getAttribute('data-calc') === 'end') {
+                for (let key in state) {
+                    formData.append(key, state[key]);
+                }
+            }
+            
             postData('assets/server.php', formData)
-                .then(res => {
-                    console.log(res);
+                .then(result => {
+                    console.log(result);
                     statusMessage.textContent = message.success;
                 })
                 .catch(() => statusMessage.textContent = message.failure)
